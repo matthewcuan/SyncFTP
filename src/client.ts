@@ -74,8 +74,8 @@ export default class SFTPClient {
     return 'Disconnected from SFTP';
   }
 
-  async listFiles(remoteDir: string, fileGlob?: string): Promise<RemoteFileInfo[]> {
-    let fileObjects: any[] = [];
+  async listFiles(remoteDir, fileGlob): Promise<FileObject[]> {
+    let fileObjects;
     try {
       if (fileGlob) {
         // @ts-ignore - second arg can be glob or filter function
@@ -84,34 +84,40 @@ export default class SFTPClient {
         fileObjects = await this.client.list(remoteDir);
       }
     } catch (err) {
-      console.log('Listing failed:', err);
+      console.error('Listing failed:', err);
+      return [];
     }
 
-    var fileNames: RemoteFileInfo[] = [];
+    const fileNames: FileObject[] = [];
+    const subdirectoryPromises: Promise<FileObject[]>[] = [];
 
     for (const file of fileObjects) {
+      const fileInfo = {
+        name: file.name,
+        mtime: file.modifyTime,
+        type: file.type,
+        size: file.size,
+        path: remoteDir
+      };
+
       if (file.type === 'd') {
         console.log(`${new Date(file.modifyTime).toISOString()} PRE ${file.name}`);
-        fileNames.push({
-          name: file.name,
-          mtime: file.modifyTime,
-          type: file.type,
-          size: file.size,
-          path: remoteDir
-        });
+        fileNames.push(fileInfo);
         
-        let subFiles = await this.listFiles(`${remoteDir}/${file.name}`);
-        fileNames = fileNames.concat(subFiles);
+        // Don't await - collect promises instead
+        subdirectoryPromises.push(
+          this.listFiles(`${remoteDir}/${file.name}`)
+        );
       } else {
         console.log(`${new Date(file.modifyTime).toISOString()} ${file.size} ${file.name}`);
-        fileNames.push({
-          name: file.name,
-          mtime: file.modifyTime,
-          type: file.type,
-          size: file.size,
-          path: remoteDir
-        });
-      }      
+        fileNames.push(fileInfo);
+      }
+    }
+
+    // Wait for all subdirectories in parallel
+    if (subdirectoryPromises.length > 0) {
+      const subdirectoryResults = await Promise.all(subdirectoryPromises);
+      fileNames.push(...subdirectoryResults.flat());
     }
 
     return fileNames;
