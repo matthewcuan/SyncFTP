@@ -1,5 +1,6 @@
 import Client from 'ssh2-sftp-client';
 import { SocksClient } from 'socks';
+const fs = require('fs');
 
 export default class SFTPClient {
   constructor() {
@@ -24,12 +25,12 @@ export default class SFTPClient {
         };
 
         var socks = await SocksClient.createConnection(opt);
-
         await this.client.connect({
           host: options.host,
           port: options.port,
           sock: socks.socket,
           username: options.username,
+          privateKey: fs.readFileSync(options.private_key.toString()),
           password: options.password
         });
       } else {
@@ -37,6 +38,7 @@ export default class SFTPClient {
           host: options.host,
           port: options.port,
           username: options.username,
+          privateKey: fs.readFileSync(options.private_key.toString()),
           password: options.password
         });
       }

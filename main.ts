@@ -9,6 +9,7 @@ interface SyncFTPSettings {
 	proxy_port: number;
 	username: string;
 	password: string;
+	private_key: string;
 	vault_path: string;
 	notify: boolean;
 	load_sync: boolean;
@@ -21,6 +22,7 @@ const DEFAULT_SETTINGS: SyncFTPSettings = {
 	proxy_port: 22,
 	username: '',
 	password: '',
+	private_key: '',
 	vault_path: '/obsidian/',
 	notify: false,
 	load_sync: false
@@ -86,7 +88,8 @@ export default class SyncFTP extends Plugin {
 					host: this.settings.url,
 					port: Number(this.settings.port),
 					username: this.settings.username,
-					password: this.settings.password
+					password: this.settings.password,
+					private_key: this.settings.private_key
 				});
 
 				if (this.settings.notify) new Notice(conn);
@@ -165,7 +168,8 @@ export default class SyncFTP extends Plugin {
 					host: this.settings.url,
 					port: Number(this.settings.port),
 					username: this.settings.username,
-					password: this.settings.password
+					password: this.settings.password,
+					private_key: this.settings.private_key
 				});
 
 				if (this.settings.notify) new Notice(conn);

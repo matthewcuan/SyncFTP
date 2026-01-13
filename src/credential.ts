@@ -79,6 +79,16 @@ export default class CredentialTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Private Key')
+			.setDesc('Path to private key')
+			.addText(text => text
+				.setValue(this.plugin.settings.private_key)
+				.onChange(async (value) => {
+					this.plugin.settings.private_key = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
 			.setName('Vaults Path')
 			.setDesc('FTP Vaults Directory Path')
 			.addText(text => text
