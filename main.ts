@@ -13,6 +13,8 @@ interface SyncFTPSettings {
 	vault_path: string;
 	notify: boolean;
 	load_sync: boolean;
+	scheduled_enabled: boolean;
+	cron_expr: string;
 }
 
 const DEFAULT_SETTINGS: SyncFTPSettings = {
@@ -25,7 +27,9 @@ const DEFAULT_SETTINGS: SyncFTPSettings = {
 	private_key: '',
 	vault_path: '/obsidian/',
 	notify: false,
-	load_sync: false
+	load_sync: false,
+	scheduled_enabled: false,
+	cron_expr: ''
 }
 
 export default class SyncFTP extends Plugin {
@@ -36,6 +40,7 @@ export default class SyncFTP extends Plugin {
 		await this.loadSettings();
 
 		this.client = new SFTPClient();
+		this.setupCron();
 
 		if (this.settings.load_sync) {
 			this.downloadFile();
@@ -68,6 +73,14 @@ export default class SyncFTP extends Plugin {
 
 	async onunload() {
 		await this.saveSettings();
+		await this.stopCron();
+	}
+
+	async stopCron() {
+		if (this.scheduledTask) {
+			try { this.scheduledTask.stop(); } catch (e) { console.error('Error stopping scheduled job', e); }
+			this.scheduledTask = null;
+		}
 	}
 
 	async loadSettings() {
@@ -76,6 +89,38 @@ export default class SyncFTP extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	// Cron scheduled task instance
+	scheduledTask: any = null;
+
+	// Initialize or reconfigure the cron job according to settings
+	setupCron() {
+		this.stopCron();
+
+		if (!this.settings || !this.settings.scheduled_enabled) return;
+		if (!this.settings.cron_expr || this.settings.cron_expr.trim() === '') return;
+
+		try {
+			const cron = require('node-cron');
+			// validate cron expression
+			if (!cron.validate(this.settings.cron_expr)) {
+				if (this.settings.notify) new Notice(`Invalid cron expression: ${this.settings.cron_expr}`);
+				return;
+			}
+
+			this.scheduledTask = cron.schedule(this.settings.cron_expr, async () => {
+				try {
+					if (this.settings.notify) new Notice(`Scheduled upload triggered: ${this.settings.cron_expr}`);
+					await this.uploadFile();
+				} catch (err) {
+					console.error('Scheduled upload failed:', err);
+				}
+			}, { scheduled: true });
+		} catch (err) {
+			console.error('Failed to create cron task:', err);
+			if (this.settings.notify) new Notice(`Failed to create cron task: ${err}`);
+		}
 	}
 
 	async uploadFile() {

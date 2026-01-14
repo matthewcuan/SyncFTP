@@ -108,6 +108,32 @@ export default class CredentialTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		// Scheduling UI
+		containerEl.createEl('h2', {text: 'Scheduling'});
+
+		new Setting(containerEl)
+			.setName('Enable scheduled upload')
+			.setDesc('If enabled, SyncFTP will run the cron schedule while Obsidian is running.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.scheduled_enabled)
+				.onChange(async (value) => {
+					this.plugin.settings.scheduled_enabled = value;
+					await this.plugin.saveSettings();
+					this.plugin.setupCron();
+				}));
+
+		new Setting(containerEl)
+			.setName('Cron expression')
+			.setDesc('Cron expression (e.g., "0 8 * * *" for daily at 08:00). Uses node-cron syntax.')
+			.addText(text => text
+				.setValue(this.plugin.settings.cron_expr || '')
+				.setPlaceholder('e.g. 0 8 * * *')
+				.onChange(async (value) => {
+					this.plugin.settings.cron_expr = value;
+					await this.plugin.saveSettings();
+					this.plugin.setupCron();
+				}));
+
 		new Setting(containerEl)
 			.setName('Sync on Load')
 			.setDesc('Would you like to pull new changes from the SFTP every time you open Obsidian?')
