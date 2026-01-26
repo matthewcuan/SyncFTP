@@ -159,7 +159,8 @@ export default class SyncFTP extends Plugin {
 
 					try {
 						if (match) {
-							if (rem_file.type === 'd' || rem_file.size === match.stat.size) {
+							if (rem_file.type === 'd' || 
+								(rem_file.size === match.stat.size && rem_file.modifyTime <= match.stat.mtime)) {
 								loc_list.splice(match_index, 1);
 							}
 						} else if (!match) {
