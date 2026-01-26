@@ -1,22 +1,6 @@
-import SFTPClientLib from 'ssh2-sftp-client';
-import { SocksClient, SocksClientOptions, SocksProxy } from 'socks';
-
-type SFTPConnectOptions = {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  proxy_host?: string;
-  proxy_port?: number;
-};
-
-type RemoteFileInfo = {
-  name: string;
-  mtime: number;
-  type: string;
-  size: number;
-  path: string;
-};
+import Client from 'ssh2-sftp-client';
+import { SocksClient } from 'socks';
+import { Notice } from 'obsidian';
 const fs = require('fs');
 
 export default class SFTPClient {
@@ -123,8 +107,10 @@ export default class SFTPClient {
     return fileNames;
   }
 
-  async uploadFile(localFile: string, remoteFile: string): Promise<string> {
-    console.log(`Uploading ${localFile} to ${remoteFile}`);
+  async uploadFile(localFile, remoteFile) {
+    var message = `Uploading ${localFile} to ${remoteFile}`;
+    new Notice(message);
+    console.log(message);
     try {
       await this.client.put(localFile, remoteFile);
     } catch (err) {
@@ -134,8 +120,10 @@ export default class SFTPClient {
     return `Uploading success for\n${localFile}`;
   }
 
-  async downloadFile(remoteFile: string, localFile: string): Promise<string> {
-    console.log(`Downloading ${remoteFile} to ${localFile}`);
+  async downloadFile(remoteFile, localFile) {
+    var message = `Downloading ${remoteFile} to ${localFile}`;
+    new Notice(message);
+    console.log(message);
     try {
       await this.client.get(remoteFile, localFile);
     } catch (err) {
