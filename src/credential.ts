@@ -182,5 +182,17 @@ export default class CredentialTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.plugin.setupLiveSync();
 				}));
+
+		new Setting(containerEl)
+			.setName('Live sync debounce (ms)')
+			.setDesc('Milliseconds to debounce live on-change uploads (default 3000).')
+			.addText((text: any) => text
+				.setValue(String(this.plugin.settings.live_debounce_ms ?? 3000))
+				.onChange(async (value: string) => {
+					const num = Number(value);
+					this.plugin.settings.live_debounce_ms = isNaN(num) ? 3000 : Math.max(0, Math.floor(num));
+					await this.plugin.saveSettings();
+					this.plugin.setupLiveSync();
+				}));
 	}
 }

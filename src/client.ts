@@ -10,7 +10,7 @@ export default class SFTPClient {
     this.client = new Client();
   }
 
-  async connect(options): Promise<void> {
+  async connect(options): Promise<string> {
     console.log(`Connecting to ${options.host}:${options.port}`);
     try {
       if (options.proxy_host && options.proxy_host !== '') {
@@ -49,7 +49,7 @@ export default class SFTPClient {
       console.log('Failed to connect:', err);
       throw new Error(`Failed to connect: ${err}`);
     }
-    return;
+    return('Connected to SFTP');
   }
 
   async disconnect(): Promise<string> {

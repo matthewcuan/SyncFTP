@@ -17,6 +17,7 @@ interface SyncFTPSettings {
 	live_enabled: boolean;
 	live_on_change: boolean;
 	live_interval_sec: number;
+	live_debounce_ms: number;
 	scheduled_enabled: boolean;
 	cron_expr: string;
 }
@@ -35,6 +36,7 @@ const DEFAULT_SETTINGS: SyncFTPSettings = {
 	live_enabled: false,
 	live_on_change: true,
 	live_interval_sec: 0,
+	live_debounce_ms: 3000,
 	scheduled_enabled: false,
 	cron_expr: ''
 }
@@ -199,7 +201,7 @@ export default class SyncFTP extends Plugin {
 				}
 				this.liveChangeDebounce = window.setTimeout(() => {
 					this.uploadFile({ isAuto: true });
-				}, 3000);
+				}, Number(this.settings.live_debounce_ms) || 3000);
 			};
 
 			const ref1 = this.app.vault.on('modify', (_file: any) => { triggerUpload(); });
