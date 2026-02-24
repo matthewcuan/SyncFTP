@@ -4,22 +4,22 @@ import { Notice } from 'obsidian';
 const fs = require('fs');
 
 export default class SFTPClient {
-  private client: SFTPClientLib;
+  private client: Client;
 
   constructor() {
-    this.client = new SFTPClientLib();
+    this.client = new Client();
   }
 
-  async connect(options: SFTPConnectOptions): Promise<void> {
+  async connect(options): Promise<void> {
     console.log(`Connecting to ${options.host}:${options.port}`);
     try {
       if (options.proxy_host && options.proxy_host !== '') {
-        const opt: SocksClientOptions = {
+        let opt = {
           proxy: {
             host: options.proxy_host,
             port: options.proxy_port as number,
             type: 5,
-          } as SocksProxy,
+          },
           command: 'connect',
           destination: {
             host: options.host,
