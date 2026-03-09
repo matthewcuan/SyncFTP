@@ -254,44 +254,57 @@ export default class SyncFTP extends Plugin {
 				let loc_list = this.app.vault.getAllLoadedFiles();
 				loc_list.splice(0, 1);
 
-				for (const rem_file of rem_list) {
-					let match_index = loc_list.findIndex((file: any) => `/${file.path}` === `${rem_file.path.replace(rem_path, '')}/${rem_file.name}`);
-					let match = loc_list[match_index];
+                // track whether any sync actions occurred
+                let anyChanges = false;
 
-					try {
-						if (match) {
-							if (rem_file.type === 'd' || (match instanceof TFile && rem_file.size === match.stat.size)) {
-								loc_list.splice(match_index, 1);
-							}
-						} else if (!match) {
-							let sync = '';
-							if (rem_file.type === 'd') {
-								if (await this.client.fileExists(`${rem_file.path}/${rem_file.name}`)) {
-									sync = await this.client.removeDir(`${rem_file.path}/${rem_file.name}`);
-								}
-							} else {
-								if (await this.client.fileExists(`${rem_file.path}/${rem_file.name}`)) {
-									sync = await this.client.deleteFile(`${rem_file.path}/${rem_file.name}`);
-								}
-							}
+                for (const rem_file of rem_list) {
+                    let match_index = loc_list.findIndex((file: any) => `/${file.path}` === `${rem_file.path.replace(rem_path, '')}/${rem_file.name}`);
+                    let match = loc_list[match_index];
 
-							if (this.settings.notify && sync.trim() != '') new Notice(sync);
-						}
-					} catch (err) {
-						console.error(`Error deleting ${rem_file.name}: ${err}`);
-					}
+                    try {
+                        if (match) {
+                            if (rem_file.type === 'd' || (match instanceof TFile && rem_file.size === match.stat.size)) {
+                                loc_list.splice(match_index, 1);
+                            }
+                        } else if (!match) {
+                            let sync = '';
+                            if (rem_file.type === 'd') {
+                                if (await this.client.fileExists(`${rem_file.path}/${rem_file.name}`)) {
+                                    sync = await this.client.removeDir(`${rem_file.path}/${rem_file.name}`);
+                                }
+                            } else {
+                                if (await this.client.fileExists(`${rem_file.path}/${rem_file.name}`)) {
+                                    sync = await this.client.deleteFile(`${rem_file.path}/${rem_file.name}`);
+                                }
+                            }
 
-				}
+                            if (sync.trim() !== '') {
+                                anyChanges = true;
+                                if (this.settings.notify) new Notice(sync);
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`Error deleting ${rem_file.name}: ${err}`);
+                    }
+                }
 
-				for (const loc_file of loc_list) {
-					let sync = '';
-					if (loc_file instanceof TFolder) {
-						sync = await this.client.makeDir(`${rem_path}/${loc_file.path}`);
-					} else if (loc_file instanceof TFile) {
-						sync = await this.client.uploadFile(`${loc_path}/${loc_file.path}`, `${rem_path}/${loc_file.path}`);
-					}
+                for (const loc_file of loc_list) {
+                    let sync = '';
+                    if (loc_file instanceof TFolder) {
+                        sync = await this.client.makeDir(`${rem_path}/${loc_file.path}`);
+                    } else if (loc_file instanceof TFile) {
+                        sync = await this.client.uploadFile(`${loc_path}/${loc_file.path}`, `${rem_path}/${loc_file.path}`);
+                    }
 
-					if (this.settings.notify && sync.trim() != '') new Notice(sync);
+                    if (sync.trim() !== '') {
+                        anyChanges = true;
+                        if (this.settings.notify) new Notice(sync);
+                    }
+                }
+
+				if (!anyChanges) {
+                    console.log('No changes found between remote and local files');
+                    if (this.settings.notify) new Notice('No changes to sync');
 				}
 
 				let disconn = await this.client.disconnect();

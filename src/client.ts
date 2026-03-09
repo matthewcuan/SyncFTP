@@ -1,6 +1,7 @@
 import Client from 'ssh2-sftp-client';
 import { SocksClient } from 'socks';
 import { Notice } from 'obsidian';
+import * as path from 'path';
 const fs = require('fs');
 
 export default class SFTPClient {
@@ -108,29 +109,33 @@ export default class SFTPClient {
   }
 
   async uploadFile(localFile, remoteFile) {
-    var message = `Uploading ${localFile} to ${remoteFile}`;
-    new Notice(message);
-    console.log(message);
+    var message = `Uploading `;
+    new Notice(message + `${path.basename(localFile)}`);
+    console.log(message + `${localFile} to ${remoteFile}`);
     try {
       await this.client.put(localFile, remoteFile);
     } catch (err) {
       console.error('Uploading failed:', err);
       return(`Uploading failed:\n${err}`);
     }
-    return `Uploading success for\n${localFile}`;
+    var successMessage = `Uploading success for\n`;
+    console.log(successMessage + localFile);
+    return successMessage + path.basename(localFile);
   }
 
   async downloadFile(remoteFile, localFile) {
-    var message = `Downloading ${remoteFile} to ${localFile}`;
-    new Notice(message);
-    console.log(message);
+    var message = `Downloading `;
+    new Notice(message + `${path.basename(localFile)}`);
+    console.log(message + `${localFile} from ${remoteFile}`);
     try {
       await this.client.get(remoteFile, localFile);
     } catch (err) {
       console.error('Downloading failed:', err);
       return(`Downloading failed:\n${err}`);
     }
-    return `Downloading success for\n${localFile}`;
+    var successMessage = `Downloading success for\n`;
+    console.log(successMessage + localFile);
+    return successMessage + path.basename(localFile);
   }
 
   async makeDir(remoteDir: string): Promise<string> {
@@ -141,7 +146,9 @@ export default class SFTPClient {
       console.error('Failed to create directory:', err);
       return(`Failed to make directory:\n${err}`);
     }
-    return `Successfully made directory:\n${remoteDir}`;
+    var successMessage = `Successfully made directory:\n${remoteDir}`;
+    console.log(successMessage);
+    return successMessage;
   }
 
   async removeDir(remoteDir: string): Promise<string> {
@@ -152,8 +159,9 @@ export default class SFTPClient {
       console.error('Failed to remove directory:', err);
       return(`Failed to remove directory:\n${err}`);
     }
-    return `Successfully removed directory:\n${remoteDir}`;
-
+    var successMessage = `Successfully removed directory:\n${remoteDir}`;
+    console.log(successMessage);
+    return successMessage;
   }
 
   async deleteFile(remoteFile: string): Promise<string> {
@@ -164,7 +172,9 @@ export default class SFTPClient {
       console.error('Deleting failed:', err);
       return(`Deleting failed:\n${err}`);
     }
-    return `Delete success for\n${remoteFile}`;
+    var successMessage = `Delete  success for\n`;
+    console.log(successMessage + remoteFile);
+    return successMessage + path.basename(remoteFile);
   }
 
   async fileExists(remoteFile: string): Promise<boolean> {
