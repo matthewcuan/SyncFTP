@@ -142,38 +142,6 @@ export default class SyncFTP extends Plugin {
 		}
 	}
 
-	// Cron scheduled task instance
-	scheduledTask: any = null;
-
-	// Initialize or reconfigure the cron job according to settings
-	setupCron() {
-		this.stopCron();
-
-		if (!this.settings || !this.settings.scheduled_enabled) return;
-		if (!this.settings.cron_expr || this.settings.cron_expr.trim() === '') return;
-
-		try {
-			const cron = require('node-cron');
-			// validate cron expression
-			if (!cron.validate(this.settings.cron_expr)) {
-				if (this.settings.notify) new Notice(`Invalid cron expression: ${this.settings.cron_expr}`);
-				return;
-			}
-
-			this.scheduledTask = cron.schedule(this.settings.cron_expr, async () => {
-				try {
-					if (this.settings.notify) new Notice(`Scheduled upload triggered: ${this.settings.cron_expr}`);
-					await this.uploadFile();
-				} catch (err) {
-					console.error('Scheduled upload failed:', err);
-				}
-			}, { scheduled: true });
-		} catch (err) {
-			console.error('Failed to create cron task:', err);
-			if (this.settings.notify) new Notice(`Failed to create cron task: ${err}`);
-		}
-	}
-
 	private teardownLiveSync() {
 		if (this.liveIntervalId !== null) {
 			window.clearInterval(this.liveIntervalId);

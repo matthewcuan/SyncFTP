@@ -4,6 +4,14 @@ import { Notice } from 'obsidian';
 import * as path from 'path';
 const fs = require('fs');
 
+interface FileObject {
+  name: string;
+  mtime: number;
+  type: string;
+  size: number;
+  path: string;
+}
+
 export default class SFTPClient {
   private client: Client;
 
@@ -11,7 +19,7 @@ export default class SFTPClient {
     this.client = new Client();
   }
 
-  async connect(options): Promise<string> {
+  async connect(options: any): Promise<string> {
     console.log(`Connecting to ${options.host}:${options.port}`);
     try {
       if (options.proxy_host && options.proxy_host !== '') {
@@ -59,7 +67,7 @@ export default class SFTPClient {
     return 'Disconnected from SFTP';
   }
 
-  async listFiles(remoteDir, fileGlob): Promise<FileObject[]> {
+  async listFiles(remoteDir: string, fileGlob = null): Promise<FileObject[]> {
     let fileObjects;
     try {
       if (fileGlob) {
@@ -108,7 +116,7 @@ export default class SFTPClient {
     return fileNames;
   }
 
-  async uploadFile(localFile, remoteFile) {
+  async uploadFile(localFile: string, remoteFile: string) {
     var message = `Uploading `;
     new Notice(message + `${path.basename(localFile)}`);
     console.log(message + `${localFile} to ${remoteFile}`);
@@ -123,7 +131,7 @@ export default class SFTPClient {
     return successMessage + path.basename(localFile);
   }
 
-  async downloadFile(remoteFile, localFile) {
+  async downloadFile(remoteFile: string, localFile: string) {
     var message = `Downloading `;
     new Notice(message + `${path.basename(localFile)}`);
     console.log(message + `${localFile} from ${remoteFile}`);
