@@ -7,6 +7,15 @@ Live Sync feature authored by xeno3917.
 
 This plugin depends on [ssh2-sftp-client](https://www.npmjs.com/package/ssh2-sftp-client) and [socks](https://www.npmjs.com/package/socks) to allow for secure file transfer. 
 
+### Building the plugin
+A build script is provided in `package.json` that runs TypeScript checks and bundles the source with esbuild. Simply execute:
+
+```bash
+npm run build
+```
+
+The resulting bundle appears in `dist/main.js` and can be packaged for Obsidian or placed under `dist/SyncFTP/` for releases.
+
 ### Use
 Once installed, an additional settings tab for SyncFTP will have been added. There you will need to provide:
 - Host URL

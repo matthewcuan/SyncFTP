@@ -17,6 +17,7 @@ const context = await esbuild.context({
 	},
 	entryPoints: ["main.ts"],
 	bundle: true,
+	platform: "node", // build for Node.js so built-in modules (node:crypto etc.) are handled
 	external: [
 		"obsidian",
 		"electron",
@@ -38,7 +39,7 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: "main.js",
+	outfile: "dist/main.js",
 });
 
 if (prod) {
