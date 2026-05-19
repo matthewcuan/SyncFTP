@@ -20,6 +20,7 @@ interface SyncFTPSettings {
 	live_debounce_ms: number;
 	scheduled_enabled: boolean;
 	cron_expr: string;
+	ignore_patterns: string;
 }
 
 const DEFAULT_SETTINGS: SyncFTPSettings = {
@@ -38,7 +39,8 @@ const DEFAULT_SETTINGS: SyncFTPSettings = {
 	live_interval_sec: 0,
 	live_debounce_ms: 3000,
 	scheduled_enabled: false,
-	cron_expr: ''
+	cron_expr: '',
+	ignore_patterns: '.git, .DS_Store, Thumbs.db'
 }
 
 export default class SyncFTP extends Plugin {
@@ -108,6 +110,21 @@ export default class SyncFTP extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	private makeIgnoreMatcher(): (relPath: string) => boolean {
+		const raw = this.settings.ignore_patterns || '';
+		const patterns = raw.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+		if (patterns.length === 0) return () => false;
+		const regexes = patterns.map(p => {
+			const escaped = p.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+			const re = escaped.replace(/\*/g, '.*').replace(/\?/g, '.');
+			return new RegExp(`^${re}$`);
+		});
+		return (relPath: string) => {
+			const segments = relPath.split('/').filter(Boolean);
+			return segments.some(seg => regexes.some(r => r.test(seg)));
+		};
 	}
 
 	// Cron scheduled task instance
@@ -222,10 +239,18 @@ export default class SyncFTP extends Plugin {
 				let loc_list = this.app.vault.getAllLoadedFiles();
 				loc_list.splice(0, 1);
 
+				const isIgnored = this.makeIgnoreMatcher();
+				const remRel = (f: any) => {
+					const full = `${f.path}/${f.name}`;
+					return full.startsWith(rem_path) ? full.substring(rem_path.length).replace(/^\/+/, '') : full;
+				};
+
                 // track whether any sync actions occurred
                 let anyChanges = false;
 
                 for (const rem_file of rem_list) {
+                    if (isIgnored(remRel(rem_file))) continue;
+
                     let match_index = loc_list.findIndex((file: any) => `/${file.path}` === `${rem_file.path.replace(rem_path, '')}/${rem_file.name}`);
                     let match = loc_list[match_index];
 
@@ -257,6 +282,8 @@ export default class SyncFTP extends Plugin {
                 }
 
                 for (const loc_file of loc_list) {
+                    if (isIgnored(loc_file.path)) continue;
+
                     let sync = '';
                     if (loc_file instanceof TFolder) {
                         sync = await this.client.makeDir(`${rem_path}/${loc_file.path}`);
@@ -318,7 +345,15 @@ export default class SyncFTP extends Plugin {
 					let loc_list = this.app.vault.getAllLoadedFiles();
 					loc_list.splice(0, 1);
 
+					const isIgnored = this.makeIgnoreMatcher();
+					const remRel = (f: any) => {
+						const full = `${f.path}/${f.name}`;
+						return full.startsWith(rem_path) ? full.substring(rem_path.length).replace(/^\/+/, '') : full;
+					};
+
 					for (const loc_file of loc_list) {
+						if (isIgnored(loc_file.path)) continue;
+
 						let match_index = rem_list.findIndex((file: any) => `${file.path.replace(rem_path, '')}/${file.name}` === `/${loc_file.path}`);
 						let match = rem_list[match_index];
 
@@ -340,6 +375,8 @@ export default class SyncFTP extends Plugin {
 					}
 
 					for (const rem_file of rem_list) {
+						if (isIgnored(remRel(rem_file))) continue;
+
 						let sync = '';
 						let dst_path = '';
 						if (rem_file.path !== rem_path) {

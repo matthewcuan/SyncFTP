@@ -102,6 +102,20 @@ export default class CredentialTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Ignore patterns')
+			.setDesc('Comma- or newline-separated names/globs. Matches against any path segment on either side. Example: .git, .DS_Store, *.tmp')
+			.addTextArea((text: any) => {
+				text.inputEl.rows = 3;
+				text.inputEl.style.width = '100%';
+				text
+					.setValue(this.plugin.settings.ignore_patterns)
+					.onChange(async (value: string) => {
+						this.plugin.settings.ignore_patterns = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
 			.setName('Sync Notifications')
 			.setDesc('Would you like to be notified of all SyncFTP actions? Necessary Notices will still populate.')
 			.addToggle((toggle: any) => toggle
